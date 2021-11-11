@@ -1,0 +1,35 @@
+{
+  "window": [
+    {
+      "name": "groupVideo",
+      "position": [0, 0],
+      "ColumnStretch": 8,
+      "RowStretch": 6,
+      "children": [
+        {
+          "name": "video",
+          "type": "label",
+          "position": [0, 0],
+          "ColumnStretch": 12,
+          "RowStretch": 7,
+          "MinimumSize": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        {
+          "name": "progressBar",
+          "type": "QSlider",
+          "position": [1, 0],
+          "ColumnStretch": 12,
+          "RowStretch": 2,
+          "SliderType": "Horizontal",
+          "SingleStep": 100,
+          "Value": 0,
+          "TickInterval": 10,
+          "eventFuncName": "onProgressChange"
+        }
+      ]
+    }
+  ]
+}
