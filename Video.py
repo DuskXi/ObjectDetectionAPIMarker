@@ -1,7 +1,9 @@
 import os
 
 import cv2
+import time
 import numpy as np
+from loguru import logger
 
 
 class Video:
@@ -14,6 +16,7 @@ class Video:
         self.cap = None
         self.numberFrames = None
         self.currentFrame = 0
+        self.frameInterval = -1
 
     def load_video(self):
         self.cap = cv2.VideoCapture(self.path)
@@ -26,10 +29,14 @@ class Video:
         self.numberFrames = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
     def get_frame(self, index):
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+        if self.cap.get(cv2.CAP_PROP_POS_FRAMES) != index:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
         ret, frame = self.cap.read()
         return np.array(frame)
 
     def get_next_frame(self):
         self.currentFrame += 1
         return self.get_frame(self.currentFrame)
+
+    def get_timestamps(self):
+        return self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
