@@ -40,3 +40,10 @@ class Video:
 
     def get_timestamps(self):
         return self.cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+
+    def set_frame(self, index):
+        self.currentFrame = index
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+
+    def set_timestamps(self, timestamps: float):
+        self.cap.set(cv2.CAP_PROP_POS_MSEC, int(timestamps * 1000))

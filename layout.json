@@ -2,16 +2,18 @@
   "window": [
     {
       "name": "groupVideo",
-      "position": [0, 0],
-      "ColumnStretch": 8,
-      "RowStretch": 6,
+      "layoutType": "QGridLayout",
+      "position": [0, 1],
+      "ColumnStretch": 0,
+      "RowStretch": 0,
+      "Align": "AlignRight",
       "children": [
         {
           "name": "video",
           "type": "label",
           "position": [0, 0],
-          "ColumnStretch": 12,
-          "RowStretch": 7,
+          "ColumnStretch": 0,
+          "RowStretch": 0,
           "MinimumSize": {
             "width": 1280,
             "height": 720
@@ -21,13 +23,42 @@
           "name": "progressBar",
           "type": "QSlider",
           "position": [1, 0],
-          "ColumnStretch": 12,
-          "RowStretch": 2,
+          "ColumnStretch": 0,
+          "RowStretch": 0,
           "SliderType": "Horizontal",
           "SingleStep": 100,
           "Value": 0,
           "TickInterval": 10,
           "eventFuncName": "onProgressChange"
+        }
+      ]
+    }, {
+      "name": "groupLeftButtons",
+      "layoutType": "QVBoxLayout",
+      "position": [0, 0],
+      "ColumnStretch": 4,
+      "RowStretch": 3,
+      "Align": "AlignTop",
+      "children": [
+        {
+          "name": "leftButtons",
+          "type":"ButtonGroup",
+          "position": [0, 0],
+          "ColumnStretch": 0,
+          "RowStretch": 0,
+          "Align": "AlignTop",
+          "Elements": [
+            {
+              "name": "play",
+              "Text": "play",
+              "eventFuncName": "onplay"
+            },
+            {
+              "name": "test2",
+              "Text": "2",
+              "eventFuncName": "onButtonCreateProjectClicked"
+            }
+          ]
         }
       ]
     }
