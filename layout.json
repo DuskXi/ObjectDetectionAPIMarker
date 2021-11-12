@@ -13,11 +13,7 @@
           "type": "label",
           "position": [0, 0],
           "ColumnStretch": 0,
-          "RowStretch": 0,
-          "MinimumSize": {
-            "width": 1280,
-            "height": 720
-          }
+          "RowStretch": 0
         },
         {
           "name": "progressBar",
@@ -29,7 +25,34 @@
           "SingleStep": 100,
           "Value": 0,
           "TickInterval": 10,
-          "eventFuncName": "onProgressChange"
+          "eventFuncName": "onProgressChange",
+          "eventMousedown": "onSliderMouseDown",
+          "eventMouseup": "onSliderMouseUp"
+        }, {
+          "name": "playButtons",
+          "type": "ButtonHGroup",
+          "position": [2, 0],
+          "ColumnStretch": 0,
+          "RowStretch": 0,
+          "Elements": [
+            {
+              "name": "play",
+              "Text": "play",
+              "Icon": "icons/play-outline.svg",
+              "eventFuncName": "onPlayButtonClick",
+              "MaximumSize": {
+                "width": 50,
+                "height": 50
+              }
+            }
+          ]
+        }, {
+          "name": "timeShow",
+          "type": "label",
+          "Text": "0:00",
+          "position": [3, 0],
+          "ColumnStretch": 0,
+          "RowStretch": 0
         }
       ]
     }, {
@@ -42,21 +65,21 @@
       "children": [
         {
           "name": "leftButtons",
-          "type":"ButtonGroup",
+          "type": "ButtonVGroup",
           "position": [0, 0],
           "ColumnStretch": 0,
           "RowStretch": 0,
           "Align": "AlignTop",
           "Elements": [
             {
-              "name": "play",
+              "name": "play1",
               "Text": "play",
               "eventFuncName": "onplay"
             },
             {
-              "name": "test2",
-              "Text": "2",
-              "eventFuncName": "onButtonCreateProjectClicked"
+              "name": "buttonOpenVideo",
+              "Text": "打开视频",
+              "eventFuncName": "openFile"
             }
           ]
         }
