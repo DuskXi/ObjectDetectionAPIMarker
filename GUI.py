@@ -1,9 +1,11 @@
+import math
 import sys
 
 import PyQt5
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from loguru import logger
 
 
 class Window(QWidget):
@@ -58,7 +60,10 @@ class Window(QWidget):
                 if "Align" in child.keys():
                     result.setAlignment(getattr(Qt, child["Align"]))
                 if layout["layoutType"] == "QGridLayout":
-                    grid.addWidget(result, *positionControl)
+                    if type(result) != PyQt5.QtWidgets.QVBoxLayout and type(result) != PyQt5.QtWidgets.QHBoxLayout:
+                        grid.addWidget(result, *positionControl)
+                    else:
+                        grid.addLayout(result, *positionControl)
                     if columnStretchControl > 0:
                         grid.setColumnStretch(positionControl[1], positionControl[1] + columnStretchControl)
                     if rowStretchControl > 0:
@@ -97,28 +102,44 @@ class Window(QWidget):
         if _type == "label":
             label = QLabel()
             label.setObjectName(name)
-            label.setMinimumSize(control["MinimumSize"]["width"], control["MinimumSize"]["height"])
+            if "MinimumSize" in control.keys():
+                label.setMinimumSize(control["MinimumSize"]["width"], control["MinimumSize"]["height"])
+            if "Text" in control.keys():
+                label.setText(control["Text"])
             result = label
         if _type == "QSlider":
-            slider = QSlider(getattr(Qt, control["SliderType"]))
+            slider = XQSlider(getattr(Qt, control["SliderType"]))
             slider.setObjectName(name)
             slider.setSingleStep(control["SingleStep"])  # 设置步长
             slider.setValue(control["Value"])  # 设置当前值
             slider.setTickInterval(control["TickInterval"])  # 设置刻度间隔
             slider.valueChanged.connect(getattr(self.listeners, control["eventFuncName"]))  # 绑定改变事件函数
+            slider.addListener("onMousePress", getattr(self.listeners, control["eventMousedown"]))
+            slider.addListener("onMouseRelease", getattr(self.listeners, control["eventMouseup"]))
+
             result = slider
         if _type == "Button":
             button = QPushButton(control["Text"])
             button.setObjectName(name)
             button.clicked.connect(getattr(self.listeners, control["eventFuncName"]))
+            if "Icon" in control.keys():
+                button.setIcon(QIcon(QPixmap(control["Icon"])))
+                button.setText("")
+            if "MaximumSize" in control.keys():
+                button.setMaximumSize(control["MaximumSize"]["width"], control["MaximumSize"]["height"])
             result = button
-        if _type == "ButtonGroup":
-            layoutGroup = QVBoxLayout()
+        if _type == "ButtonVGroup" or _type == "ButtonHGroup":
+            layoutGroup = QVBoxLayout() if _type == "ButtonVGroup" else QHBoxLayout()
             for buttonInfo in control["Elements"]:
                 button = QPushButton(buttonInfo["Text"])
                 button.setObjectName(name)
                 button.clicked.connect(getattr(self.listeners, buttonInfo["eventFuncName"]))
-                setattr(self.controls, control["name"] + "." + buttonInfo["name"], button)
+                if "MaximumSize" in buttonInfo.keys():
+                    button.setMaximumSize(buttonInfo["MaximumSize"]["width"], buttonInfo["MaximumSize"]["height"])
+                if "Icon" in buttonInfo.keys():
+                    button.setIcon(QIcon(QPixmap(buttonInfo["Icon"])))
+                    button.setText("")
+                setattr(self.controls, control["name"] + "_" + buttonInfo["name"], button)
                 layoutGroup.addWidget(button)
             result = layoutGroup
 
@@ -128,6 +149,21 @@ class Window(QWidget):
         print("current slider value=%s" % self.s1.value())
         size = self.s1.value()
         self.label.setFont(QFont("Arial", size))
+
+    # TODO: 记录笔记，修改滑动条时需要锁定信号
+    def videoUpdate(self, image, frame, timestamps):
+        self.controls.video.setPixmap(image)
+        self.controls.progressBar.blockSignals(True)
+        self.controls.progressBar.setValue(frame)
+        self.controls.progressBar.blockSignals(False)
+        self.controls.timeShow.setText(self.secondToString(timestamps))
+
+    @staticmethod
+    def secondToString(second):
+        partHour = math.floor(second / 3600)
+        partMin = math.floor((second - (partHour * 60)) / 60)
+        partSecond = math.floor(second - (partHour * 3600) - (partMin * 60))
+        return "%02d:%02d:%02d" % (partHour, partMin, partSecond)
 
 
 class Controls:
@@ -155,3 +191,23 @@ class Listeners:
 
     def onButtonCloseProjectClicked(self):
         return
+
+
+class XQSlider(QSlider):
+    def __init__(self, SliderType, parent=None):
+        super(XQSlider, self).__init__(SliderType)
+        self.listListener = []
+
+    def addListener(self, name, func):
+        self.listListener.append(name)
+        setattr(self, name, func)
+
+    def mousePressEvent(self, event):
+        super(XQSlider, self).mousePressEvent(event)
+        if "onMousePress" in self.listListener:
+            self.onMousePress(event)
+
+    def mouseReleaseEvent(self, event):
+        super(XQSlider, self).mouseReleaseEvent(event)
+        if "onMouseRelease" in self.listListener:
+            self.onMouseRelease(event)
