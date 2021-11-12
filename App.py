@@ -53,7 +53,7 @@ class App:
     def loadVideo(self):
         self.VideoFileName = QFileDialog.getOpenFileName(self.window, "打开视频文件", "./",
                                                          "Video Files (*.mp4 *.avi *flv);;All Files (*)")[0]
-        self.videoPlayer = VideoPlayer(self.window, self.VideoFileName)
+        self.videoPlayer = VideoPlayer(self.window, self.VideoFileName, self.videoExit)
         self.videoPlayer.move(frame=0)
         frame = self.videoPlayer.frame()
         height, width, channel = frame.shape  # 获取形状
@@ -77,7 +77,9 @@ class App:
             if not self.isPlayButtonClickPushed:
                 self.isPlayButtonClickPushed = True
                 self.window.controls.playButtons_play.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/pause-outline.svg")))
-                self.videoPlayer.play()
+                if not self.videoPlayer.play():
+                    self.isPlayButtonClickPushed = False
+                    self.window.controls.playButtons_play.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/play-outline.svg")))
             else:
                 self.isPlayButtonClickPushed = False
                 self.window.controls.playButtons_play.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/play-outline.svg")))
@@ -87,6 +89,7 @@ class App:
         self.sliderMouseDown = True
         if self.videoPlayer.isRun:
             self.videoPlayer.pause()
+            self.isPlayButtonClickPushed = True
 
     def onSliderMouseUp(self, event):
         self.sliderMouseDown = False
@@ -112,6 +115,11 @@ class App:
         self.videoPlayer.current = self.videoPlayer.video.get_timestamps()
         self.videoPlayer.currentAudio = self.get_recent_time(self.videoPlayer.video.get_timestamps())
 
+    def videoExit(self):
+        if self.isPlayButtonClickPushed:
+            self.isPlayButtonClickPushed = False
+            self.window.controls.playButtons_play.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/play-outline.svg")))
+
     @staticmethod
     def get_recent_time(t, step=(1 / 44100)):
         t_result = 0
@@ -133,7 +141,7 @@ class ThreadVideo(QThread):
 
 
 class VideoPlayer:
-    def __init__(self, window, path):
+    def __init__(self, window, path, videoExit):
         self.window = window  # 赋值窗体
         self.video = Video(path)  # 实例化Video对象
         self.video.load_video()  # 加载视频
@@ -148,10 +156,11 @@ class VideoPlayer:
         self.threadAudio = None  # 音频线程
         self.timer = None
 
+        self.videoExit = videoExit
+
     def video_play(self, _signal):
         # self.video.get_frame(0)  # 设置初始值帧
-        for i in range(int(self.video.numberFrames)) if self.current != -1 else range(self.video.currentFrame,
-                                                                                      int(self.video.numberFrames)):
+        while self.video.currentFrame < self.video.numberFrames:
             # 遍历全部帧数
             while self.video.get_timestamps() > time.time() - self.start:  # 循环判断是否到达播放时间
                 if not self.isRun:  # 判断是否暂停
@@ -169,8 +178,8 @@ class VideoPlayer:
             _signal.emit(QtGui.QPixmap(qImg), self.video.currentFrame, self.video.get_timestamps())  # 发送信号
             # if self.window.controls.video.isEnabled():
             #     self.window.controls.video.setPixmap(QtGui.QPixmap(qImg))  # 更新图像
-
         self.isRun = False  # 设置运行标志为false
+        self.videoExit()
 
     def audio_play(self):
         p = pyaudio.PyAudio()  # 创建音频播放器
@@ -187,12 +196,16 @@ class VideoPlayer:
         # self.isRun = False  # 设置运行标志为false
 
     def play(self):
-        self.isRun = True  # 设置运行标志为true
-        self.start = time.time() if self.start == -1 else time.time() - self.current  # 获取当前时间戳
-        self.threadVideo = ThreadVideo(self.video_play, self.window.videoUpdate)  # 初始化视频播放线程
-        self.threadAudio = threading.Thread(target=self.audio_play)  # 初始化音频播放线程
-        self.threadVideo.start()  # 启动视频播放线程
-        self.threadAudio.start()  # 启动音频播放线程
+        if self.video.currentFrame < self.video.numberFrames - 1:
+            self.isRun = True  # 设置运行标志为true
+            self.start = time.time() if self.start == -1 else time.time() - self.current  # 获取当前时间戳
+            self.threadVideo = ThreadVideo(self.video_play, self.window.videoUpdate)  # 初始化视频播放线程
+            self.threadAudio = threading.Thread(target=self.audio_play)  # 初始化音频播放线程
+            self.threadVideo.start()  # 启动视频播放线程
+            self.threadAudio.start()  # 启动音频播放线程
+            return True
+        else:
+            return False
 
     def pause(self):
         self.isRun = False  # 设置运行标志为false
