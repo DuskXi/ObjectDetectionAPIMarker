@@ -1,4 +1,12 @@
+from loguru import logger
+import numba
+from numba import jit
+
 import test
+
+
+def logInfo():
+    logger.info(f"numba version: {numba.__version__}")
 
 
 def main():
